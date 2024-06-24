@@ -34,9 +34,23 @@ def home(request):
 def search(request):
     images, favourite_list = getAllImagesAndFavouriteList(request)
     search_msg = request.POST.get('query', '')
-
+    
     # si el usuario no ingresó texto alguno, debe refrescar la página; caso contrario, debe filtrar aquellas imágenes que posean el texto de búsqueda.
-    pass
+    
+    if not search_msg:
+        return redirect("home")
+    
+    images = services_nasa_image_gallery.getAllImages(search_msg)
+    favourite_list = services_nasa_image_gallery.getAllFavouritesByUser(request)
+    
+    context = {
+        'images': images,
+        'favourite_list': favourite_list,
+        'search_term': search_msg
+    }
+    
+    return render(request, 'home.html', context)
+    
 
 
 # las siguientes funciones se utilizan para implementar la sección de favoritos: traer los favoritos de un usuario, guardarlos, eliminarlos y desloguearse de la app.
