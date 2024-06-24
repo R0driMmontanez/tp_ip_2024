@@ -32,43 +32,48 @@ def home(request):
 
 # función utilizada en el buscador.
 def search(request):
-  # Obtén el mensaje de búsqueda del POST request  
+    images, favourite_list = getAllImagesAndFavouriteList(request)
+    search_msg = request.POST.get('query', '')
     
-    search_msg = request.POST.get('query', None)
-    if search_msg is not None and search_msg != '':  
-        # Si se proporcionó una palabra clave, obtén las imágenes que coinciden con esa palabra clave  
-        images = services_nasa_image_gallery.getAllImages(input=search_msg)  
-    else:  
-        # Si no se proporcionó una palabra clave, obtén todas las imágenes  
-        images = services_nasa_image_gallery.getAllImages()  
-
-    # Convierte cada imagen a un formato que tu template pueda entender
-    #images = [fromRequestIntoNASACard(api_image) for api_image in images]
+    # si el usuario no ingresó texto alguno, debe refrescar la página; caso contrario, debe filtrar aquellas imágenes que posean el texto de búsqueda.
     
-    # Obtén la lista de imágenes favoritas del usuario  
-    favourite_list = []  
-
-    return render(request, 'home.html', {'images': images, 'favourite_list': favourite_list})  
+    if not search_msg:
+        return redirect("home")
+    
+    images = services_nasa_image_gallery.getAllImages(search_msg)
+    favourite_list = services_nasa_image_gallery.getAllFavouritesByUser(request)
+    
+    context = {
+        'images': images,
+        'favourite_list': favourite_list,
+        'search_term': search_msg
+    }
+    
+    return render(request, 'home.html', context)
     
 
 
 # las siguientes funciones se utilizan para implementar la sección de favoritos: traer los favoritos de un usuario, guardarlos, eliminarlos y desloguearse de la app.
 @login_required
 def getAllFavouritesByUser(request):
-    favourite_list = []
+    favourite_list = services_nasa_image_gallery.getAllFavouritesByUser(request)
     return render(request, 'favourites.html', {'favourite_list': favourite_list})
 
 
 @login_required
 def saveFavourite(request):
-    pass
+    services_nasa_image_gallery.saveFavourite(request)
+    return redirect('home')
 
 
 @login_required
 def deleteFavourite(request):
-    pass
+    services_nasa_image_gallery.deleteFavourite(request)
+    return redirect('favoritos')
 
 
 @login_required
 def exit(request):
-    pass
+    logout(request)
+
+    return redirect('home')
